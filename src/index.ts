@@ -5,6 +5,10 @@ import { Client, Connection } from '@elastic/elasticsearch'
 
 import whitelistedProps from './whitelisted-props'
 
+interface SignedRequestParams extends http.ClientRequestArgs {
+  body: string
+}
+
 class AWSConnection extends Connection {
   public awsCredentials
 
@@ -13,7 +17,10 @@ class AWSConnection extends Connection {
     this.makeRequest = this.signedRequest
   }
 
-  private signedRequest(reqParams: http.ClientRequestArgs): http.ClientRequest {
+  private signedRequest(reqParams: SignedRequestParams): http.ClientRequest {
+    if (!reqParams.body && reqParams.headers['Content-Length']) {
+      delete reqParams.headers['Content-Length']
+    }
     return http.request(sign(reqParams, this.awsCredentials))
   }
 }
